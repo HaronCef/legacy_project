@@ -1,9 +1,10 @@
-# notify.py
-# Notification system
-# DEPRECATED - use new_notify.py (which doesn't exist yet)
-# kept for reference
+"""Notifications for users: order e-mails and bulk messages.
 
+Settings come from env variables (see .env.example). Real SMTP sending is
+not implemented yet - send_email() is a stub.
+"""
 import os
+import sys
 
 # SMTP settings are read from environment variables, not stored in code
 SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
@@ -11,9 +12,9 @@ SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
 SMTP_USER = os.environ.get("SMTP_USER", "")
 SMTP_PASS = os.environ.get("SMTP_PASS", "")
 
-# message types: new type = one new line here
 MAX_RETRIES = 2  # extra attempts after the first one
 
+# message types: new type = one new line in MESSAGES
 ORDER_CONFIRMED = 1
 PAYMENT_RECEIVED = 2
 ORDER_CANCELLED = 3
@@ -25,7 +26,8 @@ MESSAGES = {
 }
 
 
-def send_email(to, subj, body):
+def send_email(to, subj, body):  # pylint: disable=unused-argument
+    """Send one e-mail. Stub for now: only prints, body is not used yet."""
     print(f"[STUB] Would send email to {to}: {subj}")
     return True
 
@@ -52,12 +54,15 @@ def build_message(msg_type, data):
 
 
 def notify_user(user_id, msg_type, data=None):
-    """Send a notification of msg_type to the user."""
+    """Send a notification of msg_type to the user. Returns True if sent."""
     data = data or {}
     message = build_message(msg_type, data)
     if message is None:
-        return
-    send_with_retry(data.get("email", ""), message[0], message[1])
+        log_notification(user_id, msg_type, "unknown type")
+        return False
+    ok = send_with_retry(data.get("email", ""), message[0], message[1])
+    log_notification(user_id, msg_type, "sent" if ok else "failed")
+    return ok
 
 
 def bulk_notify(users, msg):
@@ -74,5 +79,5 @@ def bulk_notify(users, msg):
 
 
 def log_notification(user_id, tp, status):
-    # TODO: write to DB (never implemented)
-    pass
+    """Write notification status to stderr (saving to DB is not done yet)."""
+    print(f"[notify] user={user_id} type={tp} status={status}", file=sys.stderr)

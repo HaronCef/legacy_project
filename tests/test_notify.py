@@ -71,3 +71,14 @@ def test_all_attempts_fail():
 def test_send_returns_false_counts_as_failed():
     with patch.object(notify, "send_email", return_value=False):
         assert notify.send_with_retry("a@test.com", "Hi", "Body") is False
+
+
+def test_log_notification_writes_to_stderr(capsys):
+    notify.log_notification(1, 2, "sent")
+    assert "user=1 type=2 status=sent" in capsys.readouterr().err
+
+
+def test_notify_user_returns_status():
+    with patch.object(notify, "send_email", return_value=True):
+        assert notify.notify_user(1, 1, {"email": "a@test.com"}) is True
+    assert notify.notify_user(1, 99, {"email": "a@test.com"}) is False
