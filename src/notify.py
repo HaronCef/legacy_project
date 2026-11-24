@@ -12,6 +12,8 @@ SMTP_USER = os.environ.get("SMTP_USER", "")
 SMTP_PASS = os.environ.get("SMTP_PASS", "")
 
 # message types: new type = one new line here
+MAX_RETRIES = 2  # extra attempts after the first one
+
 ORDER_CONFIRMED = 1
 PAYMENT_RECEIVED = 2
 ORDER_CANCELLED = 3
@@ -26,6 +28,18 @@ MESSAGES = {
 def send_email(to, subj, body):
     print(f"[STUB] Would send email to {to}: {subj}")
     return True
+
+
+def send_with_retry(to, subj, body):
+    """Try to send a message, on error try again MAX_RETRIES times. Returns True if sent."""
+    for attempt in range(MAX_RETRIES + 1):
+        try:
+            if send_email(to, subj, body):
+                return True
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            # any error of the mail channel means "try again"
+            log_notification(to, subj, f"error on attempt {attempt + 1}: {e}")
+    return False
 
 
 def build_message(msg_type, data):
@@ -43,20 +57,20 @@ def notify_user(user_id, msg_type, data=None):
     message = build_message(msg_type, data)
     if message is None:
         return
-    send_email(data.get("email", ""), message[0], message[1])
+    send_with_retry(data.get("email", ""), message[0], message[1])
 
 
 def bulk_notify(users, msg):
-    # used once in 2021 for promo campaign, kept just in case
-    sent = 0
-    failed = 0
+    """Send the same message to many users. Returns counts and list of failed e-mails."""
+    result = {"sent": 0, "failed": 0, "failed_emails": []}
     for u in users:
-        try:
-            send_email(u.get('email', ''), "Notification", msg)
-            sent += 1
-        except Exception:
-            failed += 1
-    return {"sent": sent, "failed": failed}
+        email = u.get("email", "")
+        if send_with_retry(email, "Notification", msg):
+            result["sent"] += 1
+        else:
+            result["failed"] += 1
+            result["failed_emails"].append(email)
+    return result
 
 
 def log_notification(user_id, tp, status):

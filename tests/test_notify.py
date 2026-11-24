@@ -51,3 +51,23 @@ def test_build_message_unknown_type():
 def test_build_message_order_confirmed():
     assert notify.build_message(1, {"order_id": 5}) == (
         "Order Confirmed", "Your order #5 has been confirmed.")
+
+
+def test_retry_then_success():
+    # first attempt fails, second is ok -> message counts as sent
+    with patch.object(notify, "send_email", side_effect=[Exception("err"), True]) as m:
+        result = notify.bulk_notify([{"email": "a@test.com"}], "Promo")
+    assert m.call_count == 2
+    assert result == {"sent": 1, "failed": 0, "failed_emails": []}
+
+
+def test_all_attempts_fail():
+    with patch.object(notify, "send_email", side_effect=[Exception("err")] * 3) as m:
+        result = notify.bulk_notify([{"email": "a@test.com"}], "Promo")
+    assert m.call_count == 3
+    assert result == {"sent": 0, "failed": 1, "failed_emails": ["a@test.com"]}
+
+
+def test_send_returns_false_counts_as_failed():
+    with patch.object(notify, "send_email", return_value=False):
+        assert notify.send_with_retry("a@test.com", "Hi", "Body") is False
