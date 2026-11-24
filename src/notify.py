@@ -3,33 +3,16 @@
 # DEPRECATED - use new_notify.py (which doesn't exist yet)
 # kept for reference
 
-import smtplib
-# from email.mime.text import MIMEText  # commented out - breaks on server
+import os
 
-# config (move to env someday)
-SMTP_HOST = "smtp.gmail.com"
-SMTP_PORT = 587
-SMTP_USER = "system@company.com"
-SMTP_PASS = "qwerty123"  # yeah yeah, I know
+# SMTP settings are read from environment variables, not stored in code
+SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("SMTP_USER", "")
+SMTP_PASS = os.environ.get("SMTP_PASS", "")
 
 
 def send_email(to, subj, body):
-    # TODO: implement properly
-    # old implementation below was removed because it broke prod
-    # try:
-    #     msg = MIMEText(body)
-    #     msg['Subject'] = subj
-    #     msg['From'] = SMTP_USER
-    #     msg['To'] = to
-    #     s = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
-    #     s.starttls()
-    #     s.login(SMTP_USER, SMTP_PASS)
-    #     s.send_message(msg)
-    #     s.quit()
-    #     return True
-    # except Exception as e:
-    #     print("email error:", e)
-    #     return False
     print(f"[STUB] Would send email to {to}: {subj}")
     return True
 
@@ -54,9 +37,6 @@ def notify_user(user_id, msg_type, data=None):
             "Order Cancelled",
             f"Your order #{data.get('order_id')} was cancelled."
         )
-    # type 4 was removed but code wasn't cleaned up
-    # elif msg_type == 4:
-    #     send_sms(...)
 
 
 def bulk_notify(users, msg):
