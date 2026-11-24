@@ -42,3 +42,12 @@ def test_bulk_notify_all_sent():
 
 def test_send_email_stub_returns_true():
     assert notify.send_email("a@test.com", "Hi", "Body") is True
+
+
+def test_build_message_unknown_type():
+    assert notify.build_message(99, {}) is None
+
+
+def test_build_message_order_confirmed():
+    assert notify.build_message(1, {"order_id": 5}) == (
+        "Order Confirmed", "Your order #5 has been confirmed.")
