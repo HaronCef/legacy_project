@@ -135,32 +135,11 @@ def calculate_growth(current, previous):
     g = ((current - previous) / previous) * 100
     return round(g, 2)
 
-def calculate_growth_yoy(current, previous):
-    """year over year growth - same as above but different name"""
-    if previous == 0:
-        if current > 0:
-            return 100.0
-        return 0.0
-    g = ((current - previous) / previous) * 100
-    return round(g, 2)
 
-def calculate_growth_mom(current, previous):
-    """month over month growth - same as above"""
-    if previous == 0:
-        if current > 0:
-            return 100.0
-        return 0.0
-    g = ((current - previous) / previous) * 100
-    return round(g, 2)
-
-def calculate_growth_wow(current, previous):
-    """week over week growth - yes, same formula again"""
-    if previous == 0:
-        if current > 0:
-            return 100.0
-        return 0.0
-    g = ((current - previous) / previous) * 100
-    return round(g, 2)
+# yoy / mom / wow had the same formula - keep old names so other code does not break
+calculate_growth_yoy = calculate_growth
+calculate_growth_mom = calculate_growth
+calculate_growth_wow = calculate_growth
 
 def get_conversion_rate(visitors, orders):
     if visitors == 0:
